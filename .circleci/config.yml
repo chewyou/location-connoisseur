@@ -1,0 +1,100 @@
+version: 2
+
+defaults: &DEFAULT
+  docker:
+    - image: peavers/docker-firebase-ember:latest
+
+jobs:
+  build_environment:
+    <<: *DEFAULT
+    steps:
+      - checkout
+      - run:
+          name: Installing Libraries
+          command: npm install
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+
+  lint_with_webpack:
+    <<: *DEFAULT
+    steps:
+      - checkout
+      - restore_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+      - run:
+          name: Running Webpack
+          command: npm run build --prod
+      - save_cache:
+          key: dependency-cache-{{ checksum "package.json" }}
+          paths:
+            - node_modules
+      - save_cache:
+          key: webpack-cache-{{ checksum "package.json" }}
+          paths:
+            - public
+
+  deploy_to_firebase:
+      <<: *DEFAULT
+      steps:
+        - checkout
+        - restore_cache:
+            key: dependency-cache-{{ checksum "package.json" }}
+        - restore_cache:
+            key: webpack-cache-{{ checksum "package.json" }}
+        - run:
+            name: Deploy
+            command: firebase deploy --token=$FIREBASE_DEPLOY_TOKEN
+
+  commit_changes:
+      <<: *DEFAULT
+      steps:
+        - checkout
+        - restore_cache:
+            key: webpack-cache-{{ checksum "package.json" }}
+        - run: git config --global user.name "CircleCI"
+        - run: git config --global user.email "benspickett@gmail.com"
+        - run: |
+            git add . && git commit --allow-empty -m "* Commiting webpack changes [ci skip]" && git push origin master -f
+
+  notify_user:
+      <<: *DEFAULT
+      steps:
+        - run:
+            name: Send Pushbullet Notification
+            #curl -H 'Content-Type: application/json' -H 'Access-Token: <access-token-here>'
+            #--data '{"body": "Message body", "title": "Notification title", "type": "note"}'
+            #-X POST <notification-service-api-url>
+            command: bash -c "$PUSHBULLET_NOTIFY_COMMAND"
+        - run:
+            name: Send Slack Notification
+            #curl -X POST -H 'Content-type: application/json'
+            #--data '{"attachments": [{"fallback": "Success. All builds passed.
+            #Deployment complete", "color": "#36a64f", "author_name": "CircleCI", "text": "Success.
+            #All builds passed. Deployment complete", "image_url": "http://my-website.com/path/to/image.jpg",
+            #"thumb_url": "http://example.com/path/to/thumb.png", "ts": 123456789 }]}'
+            #https://hooks.slack.com/services/<api-token>
+            command: bash -c "$SLACK_NOTIFY_COMMAND"
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build_environment:
+          filters:
+            branches:
+              only: master
+      - lint_with_webpack:
+          requires:
+            - build_environment
+#      - deploy_to_firebase:
+#          requires:
+#            - lint_with_webpack
+#      - commit_changes:
+#          requires:
+#            - lint_with_webpack
+#      - notify_user:
+#          requires:
+#            - commit_changes
+#            - deploy_to_firebase
