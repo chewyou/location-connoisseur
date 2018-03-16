@@ -1,0 +1,28 @@
+.section-body {
+
+  .map {
+    height: 100%;
+  }
+
+  .user-position {
+    text-align: right;
+  }
+
+  .list-view {
+    .list-item {
+      height: 100px;
+      margin-bottom: 20px;
+
+      .item-wrap {
+        border: 1px solid #e3e3e3;
+        height: inherit;
+        padding: 10px;
+
+        &:hover {
+          background-color: #e3e3e3;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+}

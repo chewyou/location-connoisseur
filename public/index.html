@@ -1,0 +1,232 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.6.0/css/bulma.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" type="text/css" href="css/style.css"/>
+
+    <script type="text/javascript" src="js/main.js"></script>
+    <!--<script type="text/javascript" src="../src/js/jquery-2.1.4.js"></script>-->
+    <script type="text/javascript" src="js/jquery-2.1.4.js"></script>
+
+    <title>Location Connoisseur</title>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="section section-header">
+        <div class="columns is-mobile">
+            <div class="column is-11-dekstop is-10-mobile">
+                <span class="page-title">Location Connoisseur</span>
+            </div>
+            <div class="column is-1-desktop is-2-mobile">
+                <div class="loader-wrap"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section section-body">
+
+        <div class="columns">
+
+            <div class="column is-2 options-wrap">
+                <div class="subtitle">
+                    Options
+                </div>
+                <div class="field">
+                    <label class="label">Radius (in meters)</label>
+                    <input type="text" class="radius text input" value="500" placeholder="Radius">
+                </div>
+                <div class="field">
+                    <label class="label">Type of place</label>
+                    <div class="control">
+                        <div class="select">
+                            <select class="type-option">
+                                <option value="">Default</option>
+                                <option value="airport">Airport</option>
+                                <option value="atm">ATM</option>
+                                <option value="art_gallery">Art Gallery</option>
+                                <option value="bakery">Bakery</option>
+                                <option value="bank">Bank</option>
+                                <option value="bar">Bar</option>
+                                <option value="bus_station">Bus Station</option>
+                                <option value="cafe">Cafe</option>
+                                <option value="car_rental">Car Rental</option>
+                                <option value="car_repair">Car Repair</option>
+                                <option value="church">Church</option>
+                                <option value="clothing_store">Clothing Store</option>
+                                <option value="convenience_store">Convenience Store</option>
+                                <option value="dentist">Dentist</option>
+                                <option value="doctor">Doctor</option>
+                                <option value="fire_station">Fire Station</option>
+                                <option value="gas_station">Gas Station</option>
+                                <option value="gym">Gym</option>
+                                <option value="hardware_store">Hardware Store</option>
+                                <option value="hospital">Hospital</option>
+                                <option value="laundry">Laundry</option>
+                                <option value="library">Library</option>
+                                <option value="liquor_store">Liquor Store</option>
+                                <option value="locksmith">Locksmith</option>
+                                <option value="meal_takeaway">Meal Takeaway</option>
+                                <option value="movie_theater">Movie Theater</option>
+                                <option value="museum">Museum</option>
+                                <option value="park">Park</option>
+                                <option value="parking">Parking</option>
+                                <option value="pharmacy">Pharmacy</option>
+                                <option value="physiotherapist">Physiotherapist</option>
+                                <option value="police">Police</option>
+                                <option value="post_office">Post Office</option>
+                                <option value="restaurant">Restaurant</option>
+                                <option value="school">School</option>
+                                <option value="store">Store</option>
+                                <option value="supermarket">Supermarket</option>
+                                <option value="taxi_stand">Taxi Stand</option>
+                                <option value="train_station">Train Station</option>
+                                <option value="zoo">Zoo</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="field">
+                    <div class="button refresh-location">Refresh</div>
+                </div>
+            </div>
+
+            <div class="column is-10">
+                <div class="columns">
+                    <div class="column">
+                        <div class="subtitle">Places near you</div>
+                    </div>
+                    <div class="column">
+                        <div class="button map-toggle is-light">Map View</div>
+                        <div class="button list-toggle">List View</div>
+                    </div>
+                    <div class="column is-hidden-mobile">
+                        <div class="location-wrap">
+                            <div class="user-position"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="columns">
+                    <div class="column is-12 map-view">
+                        <div class="places-near-user">
+                            <div id="map" class="map"></div>
+                        </div>
+                    </div>
+                    <div class="column list-view is-hidden">
+                        <div class="columns is-mobile is-multiline">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+
+    $(window).load(() => {
+        $('.loader-wrap').addClass('loader');
+        $('.user-position').fadeOut();
+
+        $('.refresh-location').on("click", function () {
+            $('.user-position').fadeOut().html("");
+            $('.list-view > .columns').fadeOut().html("");
+            $('.loader-wrap').addClass('loader');
+            refreshLocation();
+        });
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(success, fail);
+        }
+    });
+
+    function refreshLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(success, fail);
+        }
+    }
+
+    function fail() {
+        console.log("Location blocked by user");
+    }
+
+    function success(position) {
+        let location = position.coords.latitude + "," + position.coords.longitude;
+        let radius = $('.radius').val();
+        let type = $('.type-option').val();
+
+        // Load Location into header
+        loadLatLong(location, position.coords.latitude, position.coords.longitude, radius, type);
+    }
+
+    function loadLatLong(location, lat, long, radius, type) {
+        $('.loader-wrap').removeClass('loader');
+        $('.user-position').html(location);
+        $('.user-position').fadeIn();
+
+        initMap(lat, long, radius, type);
+    }
+
+    let map;
+    let infowindow;
+
+    function initMap(lat, long, radius, type) {
+        let pyrmont = {lat: lat, lng: long};
+
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: pyrmont,
+            zoom: 15
+        });
+
+        infowindow = new google.maps.InfoWindow();
+        let service = new google.maps.places.PlacesService(map);
+        service.nearbySearch({
+            location: pyrmont,
+            radius: radius,
+            type: type
+        }, callback);
+    }
+
+    function callback(results, status) {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+            for (let i = 0; i < results.length; i++) {
+                createMarker(results[i]);
+                addToList(results[i]);
+                console.log("name => " + results[i].name + " || place_id => " + results[i].place_id);
+            }
+        }
+    }
+
+    function createMarker(place) {
+        let marker = new google.maps.Marker({
+            map: map,
+            position: place.geometry.location
+        });
+
+        google.maps.event.addListener(marker, 'click', function () {
+            infowindow.setContent(place.name);
+            infowindow.open(map, this);
+        });
+    }
+
+    function addToList(place) {
+        let list = $('.list-view > .columns');
+        list.fadeIn();
+        list.append("<div class='column is-6-desktop is-6-tablet is-12-mobile list-item' data-id='" + place.place_id + "'><div class='item-wrap'>" + place.name + "</div></div>");
+    }
+
+</script>
+<script type="text/javascript"
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDYxUVu-kgWvyuOHJpQHqTVjnAUHhbmUp0&libraries=places&callback=initMap"></script>
+
+
+</body>
+</html>
