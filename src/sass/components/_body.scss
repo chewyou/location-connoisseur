@@ -1,5 +1,16 @@
 .section-body {
 
+  .options-wrap {
+
+    .select {
+      width: 100%;
+
+      .type-option {
+        width: inherit;
+      }
+    }
+  }
+
   .map {
     height: 100%;
   }

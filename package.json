@@ -1,6 +1,6 @@
 {
   "name": "connoisseur",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A small, places search",
   "main": "index.html",
   "dependencies": {
