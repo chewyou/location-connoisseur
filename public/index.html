@@ -45,7 +45,7 @@
                     <div class="control">
                         <div class="select">
                             <select class="type-option">
-                                <option value="">Default</option>
+                                <option value="any">Default</option>
                                 <option value="airport">Airport</option>
                                 <option value="atm">ATM</option>
                                 <option value="art_gallery">Art Gallery</option>
@@ -102,13 +102,16 @@
                         <div class="subtitle">Places near you</div>
                     </div>
                     <div class="column">
-                        <div class="button map-toggle is-light">Map View</div>
-                        <div class="button list-toggle">List View</div>
+                        <div class="button map-toggle is-light">View Map</div>
+                        <div class="button list-toggle">View List</div>
                     </div>
                     <div class="column is-hidden-mobile">
                         <div class="location-wrap">
                             <div class="user-position"></div>
                         </div>
+                    </div>
+                    <div class="column location-blocked-message is-hidden">
+                        <div class="has-text-danger">Location blocked by user</div>
                     </div>
                 </div>
                 <div class="columns">
@@ -143,9 +146,7 @@
             refreshLocation();
         });
 
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(success, fail);
-        }
+        refreshLocation();
     });
 
     function refreshLocation() {
@@ -156,6 +157,9 @@
 
     function fail() {
         console.log("Location blocked by user");
+        $('.location-wrap').parent('.column').addClass('is-hidden');
+        $('.location-blocked-message').removeClass('is-hidden');
+        $('.loader-wrap').removeClass('loader');
     }
 
     function success(position) {
@@ -193,15 +197,35 @@
             radius: radius,
             type: type
         }, callback);
+
+//        createUserMarker(pyrmont);
     }
 
     function callback(results, status) {
         if (status === google.maps.places.PlacesServiceStatus.OK) {
             for (let i = 0; i < results.length; i++) {
                 createMarker(results[i]);
-                addToList(results[i]);
-                console.log("name => " + results[i].name + " || place_id => " + results[i].place_id);
+                getPlaceDetails(results[i].place_id);
             }
+        }
+        if (results.length === 0) {
+            console.log("no results");
+            let list = $('.list-view > .columns');
+            list.fadeIn();
+            list.append("<div class='column is-12 has-text-info has-text-centered'>No results found</div>")
+        }
+    }
+
+    function getPlaceDetails(placeId) {
+        let detailsService = new google.maps.places.PlacesService(map);
+        detailsService.getDetails({
+            placeId: placeId
+        }, detailsCallback);
+    }
+
+    function detailsCallback(result, status) {
+        if (result.formatted_phone_number) {
+            addToList(result);
         }
     }
 
@@ -218,9 +242,69 @@
     }
 
     function addToList(place) {
+        console.log(place);
         let list = $('.list-view > .columns');
+
+        let openValue;
+        if (place.opening_hours) {
+            openValue = place.opening_hours.open_now;
+        }
+
+        let open;
+        if (openValue === true) {
+            open = "<span class='has-text-success'>(Open)</span>";
+        } else if (openValue === false) {
+            open = "<span class='has-text-danger'>(Closed)</span>";
+        } else {
+            open = "";
+        }
+
+        let phone;
+        if (place.formatted_phone_number) {
+            phone = place.formatted_phone_number;
+        } else {
+            phone = "";
+        }
+
+        let website;
+        if (place.website) {
+            website = "Website";
+        } else {
+            website = "";
+        }
+
+        let rating;
+        if (place.rating) {
+            rating = place.rating;
+        } else {
+            rating = "No rating";
+        }
+
         list.fadeIn();
-        list.append("<div class='column is-6-desktop is-6-tablet is-12-mobile list-item' data-id='" + place.place_id + "'><div class='item-wrap'>" + place.name + "</div></div>");
+        list.append("<div class='column is-6-desktop is-6-tablet is-12-mobile list-item' data-id='" + place.place_id + "'>"
+            + "<div class='item-wrap'>"
+            + "<div class='icon'><img src='" + place.icon + "'></div>"
+            + "<div class='name'>" + place.name  + "  " + open + "</div>"
+            + "<div class='rating'>" + rating + "</div>"
+            + "<div class='location'>" + place.vicinity + "</div>"
+            + "<div class='phone'>" + phone + "</div>"
+            + "<div class='website'><a href='" + place.website + "'>"+website+"</a></div>"
+            + "</div></div>");
+    }
+
+    function createUserMarker(userLocation) {
+        let image = "img/blue-pin.png";
+
+        let userMarker = new google.maps.Marker({
+            map: map,
+            position: userLocation,
+            icon: image
+        });
+
+        google.maps.event.addListener(userMarker, 'click', function () {
+            infowindow.setContent("You");
+            infowindow.open(map, this);
+        });
     }
 
 </script>
