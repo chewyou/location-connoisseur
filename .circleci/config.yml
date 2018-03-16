@@ -94,7 +94,7 @@ workflows:
       - commit_changes:
           requires:
             - lint_with_webpack
-#      - notify_user:
-#          requires:
-#            - commit_changes
-#            - deploy_to_firebase
+      - notify_user:
+          requires:
+            - commit_changes
+            - deploy_to_firebase
