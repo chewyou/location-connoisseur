@@ -209,7 +209,6 @@
             }
         }
         if (results.length === 0) {
-            console.log("no results");
             let list = $('.list-view > .columns');
             list.fadeIn();
             list.append("<div class='column is-12 has-text-info has-text-centered'>No results found</div>")
@@ -242,7 +241,6 @@
     }
 
     function addToList(place) {
-        console.log(place);
         let list = $('.list-view > .columns');
 
         let openValue;
