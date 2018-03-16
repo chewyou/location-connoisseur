@@ -88,12 +88,12 @@ workflows:
       - lint_with_webpack:
           requires:
             - build_environment
-#      - deploy_to_firebase:
-#          requires:
-#            - lint_with_webpack
-#      - commit_changes:
-#          requires:
-#            - lint_with_webpack
+      - deploy_to_firebase:
+          requires:
+            - lint_with_webpack
+      - commit_changes:
+          requires:
+            - lint_with_webpack
 #      - notify_user:
 #          requires:
 #            - commit_changes
